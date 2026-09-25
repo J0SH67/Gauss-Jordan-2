@@ -594,9 +594,15 @@ with tab2:
             r2 = 1.0 - (ss_res / ss_tot)
             mae = np.mean(np.abs(residuals))
             rmse = np.sqrt(np.mean(residuals**2))
+            # Mean Absolute Percentage Error -> expressed as "accuracy".
+            # This is the standard way to turn a regression error into a
+            # single accuracy-style percentage (unlike an ad-hoc per-row
+            # formula): Accuracy = 100% - average absolute % error.
+            mape = np.mean(np.abs(residuals / y_data)) * 100.0
+            accuracy_pct = 100.0 - mape
 
             # Display Key Statistical Performance Indicators (KPIs)
-            m1, m2, m3, m4 = st.columns(4)
+            m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric(
                 "R² Score (Fit Quality)",
                 f"{r2:.4f}",
@@ -616,6 +622,17 @@ with tab2:
                 "Max Error",
                 f"{np.max(np.abs(residuals)):.2f} MPa",
                 help="Largest single variance across all test batches.",
+            )
+            m5.metric(
+                "Accuracy (100% \u2212 MAPE)",
+                f"{accuracy_pct:.2f}%",
+                help=(
+                    "Derived from Mean Absolute Percentage Error: "
+                    "100% minus the average absolute error as a percentage "
+                    "of actual strength. This is training-data accuracy \u2014 "
+                    "see the Leave-One-Out Cross-Validation accuracy below "
+                    "for a more honest, held-out estimate."
+                ),
             )
 
             # Axis Explanation Banner
@@ -656,7 +673,14 @@ with tab2:
                         "Actual Strength (MPa)": y_data,
                         "Predicted Strength (MPa)": y_pred,
                         "Residual Error (MPa)": residuals,
+                        "Accuracy (%)": 100.0 - (np.abs(residuals) / y_data * 100.0),
                     }
+                )
+                st.caption(
+                    "Accuracy (%) here is per-batch: 100% minus that "
+                    "batch's absolute percentage error. It is not a "
+                    "classification accuracy \u2014 it simply expresses each "
+                    "prediction's error as a percentage for easy reading."
                 )
 
                 st.dataframe(
@@ -667,6 +691,7 @@ with tab2:
                         "Actual Strength (MPa)": "{:.2f}",
                         "Predicted Strength (MPa)": "{:.2f}",
                         "Residual Error (MPa)": "{:+.2f}",
+                        "Accuracy (%)": "{:.1f}%",
                     }),
                     use_container_width=True,
                     hide_index=True,
@@ -708,7 +733,7 @@ with tab2:
                         f" reliable cross-validation."
                     )
 
-                lc1, lc2, lc3 = st.columns(3)
+                lc1, lc2, lc3, lc4 = st.columns(4)
                 lc1.metric(
                     "LOOCV R²",
                     f"{loocv_result['r2']:.4f}",
@@ -716,6 +741,23 @@ with tab2:
                 )
                 lc2.metric("LOOCV MAE", f"{loocv_result['mae']:.2f} MPa")
                 lc3.metric("LOOCV RMSE", f"{loocv_result['rmse']:.2f} MPa")
+
+                valid_mask = ~np.isnan(loocv_result["residuals"])
+                loocv_mape = np.mean(
+                    np.abs(
+                        loocv_result["residuals"][valid_mask]
+                        / y_data[valid_mask]
+                    )
+                ) * 100.0
+                lc4.metric(
+                    "LOOCV Accuracy (100% \u2212 MAPE)",
+                    f"{100.0 - loocv_mape:.2f}%",
+                    help=(
+                        "The honest counterpart to the training-data "
+                        "accuracy above \u2014 computed only from held-out "
+                        "predictions."
+                    ),
+                )
 
                 if loocv_result["r2"] < r2 - 0.15:
                     st.warning(
