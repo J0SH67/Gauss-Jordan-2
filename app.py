@@ -243,10 +243,51 @@ with tab2:
             "Curing_Age_Days": [7.0, 28.0, 7.0, 28.0, 7.0, 28.0, 14.0, 14.0],
             "Strength_MPa": [21.5, 32.0, 29.8, 41.2, 38.5, 52.0, 28.4, 43.1],
         }
-        data_df = pd.DataFrame(default_ml_data)
+        if "ml_training_data" not in st.session_state:
+            st.session_state.ml_training_data = pd.DataFrame(default_ml_data)
+        if "ml_editor_version" not in st.session_state:
+            st.session_state.ml_editor_version = 0
+
         edited_data = st.data_editor(
-            data_df, use_container_width=True, num_rows="dynamic"
+            st.session_state.ml_training_data,
+            use_container_width=True,
+            num_rows="dynamic",
+            key=f"ml_data_editor_{st.session_state.ml_editor_version}",
         )
+        # Keep session state in sync with any inline edits/adds/deletes made
+        # directly in the grid above (e.g. its own trash icon or "+" row).
+        st.session_state.ml_training_data = edited_data
+
+        remove_col, button_col = st.columns([3, 1])
+        with remove_col:
+            if len(edited_data) > 1:
+                batch_to_remove = st.selectbox(
+                    "Select a batch to remove",
+                    options=list(edited_data.index),
+                    format_func=lambda i: (
+                        f"Batch {i + 1}: Cement={edited_data.loc[i, 'Cement_kg_m3']:.0f} kg/m\u00b3, "
+                        f"w/c={edited_data.loc[i, 'Water_Cement_Ratio']:.2f}, "
+                        f"Age={edited_data.loc[i, 'Curing_Age_Days']:.0f}d, "
+                        f"Strength={edited_data.loc[i, 'Strength_MPa']:.1f} MPa"
+                    ),
+                    label_visibility="collapsed",
+                )
+            else:
+                batch_to_remove = None
+                st.caption("At least one batch must remain \u2014 add more before removing this one.")
+        with button_col:
+            if st.button(
+                "🗑️ Remove Batch",
+                use_container_width=True,
+                disabled=(batch_to_remove is None),
+            ):
+                st.session_state.ml_training_data = edited_data.drop(
+                    index=batch_to_remove
+                ).reset_index(drop=True)
+                # Changing the key forces the grid to fully remount with the
+                # smaller dataframe rather than keeping stale internal state.
+                st.session_state.ml_editor_version += 1
+                st.rerun()
 
         feature_cols_preview = [
             "Cement_kg_m3",
