@@ -274,11 +274,12 @@ with tab2:
                     hide_index=True,
                 )
                 corr_df = edited_data[feature_cols_preview].corr()
-                st.caption("Pairwise correlation matrix:")
+                st.caption(
+                    "Pairwise correlation matrix (values near +1/-1 indicate "
+                    "strong correlation between predictors):"
+                )
                 st.dataframe(
-                    corr_df.style.format("{:.2f}").background_gradient(
-                        cmap="RdBu_r", vmin=-1, vmax=1
-                    ),
+                    corr_df.style.format("{:.2f}"),
                     use_container_width=True,
                 )
             except Exception as e:
