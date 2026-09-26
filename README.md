@@ -1,8 +1,8 @@
-# 🏗️ Concrete Compressive Strength Predictor & Linear Systems Solver
+# Concrete Compressive Strength Predictor & Linear Systems Solver
 ### *Supervised Machine Learning via Custom Gauss-Jordan Elimination with Scale-Aware Pivoting*
 
 **Davao Oriental State University**  
-College of Engineering — Department of Civil Engineering  
+Faculty of Computing Engineering and Technology  — Department of Civil Engineering  
 *Project Defense Documentation & Technical Implementation (September 2026)*
 
 [![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
