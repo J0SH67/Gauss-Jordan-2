@@ -1,4 +1,4 @@
-#  Concrete Compressive Strength Predictor & Linear Systems Solver
+[#  Concrete Compressive Strength Predictor & Linear Systems Solver
 ### *Supervised Machine Learning via Custom Gauss-Jordan Elimination*
 
 [![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
@@ -76,3 +76,4 @@ $$\text{Strength (MPa)} = \beta_0 + \beta_1(\text{Cement}) + \beta_2(w/c) + \bet
 ├── linear_regression.py   # OLS Normal Equations engine powered by Gauss-Jordan
 ├── requirements.txt       # Project dependencies
 └── README.md              # Project documentation
+](https://github.com/J0SH67/ML-Using-GaussJordan-Method)
