@@ -1,5 +1,144 @@
-# 🏗️ Concrete Compressive Strength Predictor & Linear Systems Solver ### Supervised Machine Learning via Custom Gauss-Jordan Elimination with Scale-Aware Pivoting
-*Davao Oriental State University* College of Engineering — Department of Civil Engineering[span_0](start_span)[span_0](end_span) Project Defense Documentation & Technical Implementation (September 2026)*[span_1](start_span)[span_1](end_span) [![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io) [![Python](https://img.shields.io/badge/Language-Python%203.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/) [![License](https://img.shields.io/badge/License-Academic%20Use-blue?style=for-the-badge)](#) --- ## 👥 Proponents & Contributors * **John Joshua D. Ilisan**[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span) * **Darius Lape**[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span) * **Briel Jan M. Lacia**[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span) --- ## 📌 Executive Summary In civil engineering practice, evaluating the 28-day compressive strength of concrete conventionally requires casting standard cylinders and curing them in water tanks for nearly a month before conducting destructive testing on a Universal Testing Machine (UTM)[span_8](start_span)[span_8](end_span). This project demonstrates how **Machine Learning* can estimate concrete compressive strength directly from batch proportions from first principles[span_9](start_span)[span_9](end_span). Rather than relying on commercial, closed-source "black box" libraries such as Scikit-Learn, all numerical and machine learning foundations are implemented from scratch[span_10](start_span)[span_10](end_span): 1. **Custom Gauss-Jordan Elimination Solver (gauss_jordan.py):** Solves general $n \times n$ systems using partial pivoting, scale-aware relative tolerance singularity detection, and an auditable step-by-step transformation logging pipeline[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span). 2. **Multiple Linear Regression Engine (linear_regression.py):** Solves Ordinary Least Squares (OLS) via the Normal Equations[span_13](start_span)[span_13](end_span)[span_14](start_span)[span_14](end_span). Features custom matrix inversion of $X^T X$ (solving unit column vectors $e_i$ via Gauss-Jordan), coefficient hypothesis testing ($t$-statistics and $p$-values), and Leave-One-Out Cross-Validation (LOOCV)[span_15](start_span)[span_15](end_span)[span_16](start_span)[span_16](end_span). 3. **Interactive Streamlit Web Dashboard (app.py):** Includes a general matrix solver (Tab 1) and an applied civil engineering predictor (Tab 2) equipped with multicollinearity screening (VIF), interactive data editing, in-sample vs. held-out validation metrics, and mix design simulation sliders[span_17](start_span)[span_17](end_span)[span_18](start_span)[span_18](end_span). --- ## 📐 Mathematical Formulation ### 1. The Concrete Compressive Strength Model Concrete compressive strength is modeled as a multi-variable linear function of three primary mix parameters[span_19](start_span)[span_19](end_span): $$\text{Strength} = \beta_0 + \beta_1(\text{Cement}) + \beta_2(w/c) + \beta_3(\text{Age})$$[span_20](start_span)[span_20](end_span) | Parameter | Type | Unit | Engineering Role & Behavior | | :--- | :--- | :--- | :--- | | *$\beta_0$* | Unknown | $\text{MPa}$ | *Baseline Intercept*: Mathematical datum of the regression hyperplane[span_21](start_span)[span_21](end_span). | | *$x_1$ / $\beta_1$* | Feature | $\text{kg/m}^3$ | *Cement Content*: Primary binder[span_22](start_span)[span_22](end_span)[span_23](start_span)[span_23](end_span). Positive effect ($\beta_1 > 0$) as binder paste densifies[span_24](start_span)[span_24](end_span)[span_25](start_span)[span_25](end_span). | | *$x_2$ / $\beta_2$* | Feature | Decimal | *Water-Cement Ratio ($w/c$)*: Governed by Abrams' Law[span_26](start_span)[span_26](end_span)[span_27](start_span)[span_27](end_span). Negative effect ($\beta_2 < 0$) due to capillary voids left by unreacted water[span_28](start_span)[span_28](end_span)[span_29](start_span)[span_29](end_span). | | *$x_3$ / $\beta_3$* | Feature | Days | *Curing Age*: Hydration progression over time[span_30](start_span)[span_30](end_span)[span_31](start_span)[span_31](end_span). Positive effect ($\beta_3 > 0$) as Calcium Silicate Hydrates (C-S-H) form[span_32](start_span)[span_32](end_span)[span_33](start_span)[span_33](end_span). | | *$y$* | Target | $\text{MPa}$ | *Compressive Strength*: Failure stress under UTM compression[span_34](start_span)[span_34](end_span). | --- ### 2. Ordinary Least Squares via the Normal Equations Because the number of cylinder test batches ($N$) exceeds the number of regression parameters ($k = 4$), the experimental system is rectangular and overdetermined ($X\beta \approx y$)[span_35](start_span)[span_35](end_span). To minimize the sum of squared prediction errors $\sum (y - \hat{y})^2$, calculus yields the **Normal Equations**[span_36](start_span)[span_36](end_span): $$(X^T X)\beta = X^T y \quad \iff \quad A\beta = b$$[span_37](start_span)[span_37](end_span)[span_38](start_span)[span_38](end_span) * $X$ is the $(N \times 4)$ design matrix with a leading bias column of $1$s[span_39](start_span)[span_39](end_span)[span_40](start_span)[span_40](end_span). * $X^T X$ compresses the $N$ observations into a symmetric, square $(4 \times 4)$ coefficient matrix ($A$)[span_41](start_span)[span_41](end_span)[span_42](start_span)[span_42](end_span). * $X^T y$ compresses target values into a $(4 \times 1)$ column vector ($b$)[span_43](start_span)[span_43](end_span)[span_44](start_span)[span_44](end_span). * The unknown weight vector $\beta = [\beta_0, \beta_1, \beta_2, \beta_3]^T$ is solved directly by passing $[(X^T X) \mid (X^T y)]$ into our custom Gauss-Jordan solver[span_45](start_span)[span_45](end_span)[span_46](start_span)[span_46](end_span)[span_47](start_span)[span_47](end_span). --- ### 3. Scale-Aware Gauss-Jordan Elimination The custom solver in gauss_jordan.py applies **Partial Pivoting** to maintain numerical stability by swapping rows to position the maximum absolute pivot value on the diagonal before row normalization[span_48](start_span)[span_48](end_span)[span_49](start_span)[span_49](end_span). * *Scale-Aware Singularity Check:* Because civil engineering data combines variables of drastically different scales (cement content $\sim 300\text{ kg/m}^3$ vs. $w/c$ ratio $\sim 0.4$), fixed absolute tolerances fail[span_50](start_span)[span_50](end_span)[span_51](start_span)[span_51](end_span). The solver dynamically establishes a relative singularity threshold[span_52](start_span)[span_52](end_span)[span_53](start_span)[span_53](end_span): $$\text{threshold} = \max(\text{tol} \times \max(\vert{}M\vert{}), 10^{-14}) \quad \text{where } \text{tol} = 10^{-10}$$[span_54](start_span)[span_54](end_span) If a pivot falls below this relative threshold, the system is rejected as singular or ill-conditioned[span_55](start_span)[span_55](end_span)[span_56](start_span)[span_56](end_span). --- ### 4. Statistical Inference & Custom Matrix Inversion To evaluate whether regression coefficients are statistically meaningful or merely artifacts of small-sample noise, the standard errors of $\beta$ are computed[span_57](start_span)[span_57](end_span)[span_58](start_span)[span_58](end_span): $$\text{SE}(\beta) = \sqrt{\sigma^2 \cdot \text{diag}((X^T X)^{-1})}, \quad \text{where } \sigma^2 = \frac{\sum (y - \hat{y})^2}{N - p}$$[span_59](start_span)[span_59](end_span) * *No Library Inversion:* Rather than calling np.linalg.inv, the system computes $(X^T X)^{-1}$ using the custom Gauss-Jordan engine by solving $(X^T X)z_i = e_i$ for each standard unit basis vector $e_i$[span_60](start_span)[span_60](end_span)[span_61](start_span)[span_61](end_span). * *Hypothesis Testing:* Two-tailed $t$-statistics ($t = \beta / \text{SE}$) and $p$-values are evaluated across $N - p$ degrees of freedom[span_62](start_span)[span_62](end_span)[span_63](start_span)[span_63](end_span). --- ### 5. Multicollinearity & Honest Cross-Validation * *Variance Inflation Factor (VIF):* Computed prior to training to ensure that physical interdependencies between cement content and water ratio do not cause collinearity breakdown[span_64](start_span)[span_64](end_span)[span_65](start_span)[span_65](end_span). Each predictor is regressed against all other predictors using our custom regression class[span_66](start_span)[span_66](end_span). * *Leave-One-Out Cross-Validation (LOOCV):* With small batch samples, in-sample $R^2$ is optimistically biased[span_67](start_span)[span_67](end_span)[span_68](start_span)[span_68](end_span)[span_69](start_span)[span_69](end_span). The system iteratively withholds each observation, retrains the model on the remaining $N-1$ specimens, and predicts the held-out point[span_70](start_span)[span_70](end_span)[span_71](start_span)[span_71](end_span)[span_72](start_span)[span_72](end_span). Unstable or ill-conditioned folds are flagged and reported[span_73](start_span)[span_73](end_span)[span_74](start_span)[span_74](end_span)[span_75](start_span)[span_75](end_span). --- ## 🔬 Methodological Improvements | Engineering Aspect | Initial Implementation | Revised & Verified Implementation | | :--- | :--- | :--- | | *Singularity Threshold**[span_76](start_span)[span_76](end_span) | Fixed absolute tolerance ($10^{-12}$)[span_77](start_span)[span_77](end_span). | Scale-aware relative tolerance ($\text{tol} \times \max(\vert{}M\vert{})$) preventing false passes on ill-conditioned systems[span_78](start_span)[span_78](end_span)[span_79](start_span)[span_79](end_span). | | **Validation Rigor**[span_80](start_span)[span_80](end_span) | In-sample training fit labeled as "validation[span_81](start_span)"[span_81](end_span). | Added full **Leave-One-Out Cross-Validation (LOOCV)* as an independent accuracy check[span_82](start_span)[span_82](end_span)[span_83](start_span)[span_83](end_span)[span_84](start_span)[span_84](end_span). | | **Statistical Inference**[span_85](start_span)[span_85](end_span) | Point estimates reported without uncertainty bounds[span_86](start_span)[span_86](end_span). | Standard errors, $t$-statistics, degrees of freedom, and $p$-values derived via custom $(X^T X)^{-1}$[span_87](start_span)[span_87](end_span)[span_88](start_span)[span_88](end_span)[span_89](start_span)[span_89](end_span). | | **Multicollinearity Checks**[span_90](start_span)[span_90](end_span) | Not assessed[span_91](start_span)[span_91](end_span). | Automated Variance Inflation Factor (VIF) and pairwise correlation matrix computed pre-training[span_92](start_span)[span_92](end_span)[span_93](start_span)[span_93](end_span). | | **Accuracy Metric**[span_94](start_span)[span_94](end_span) | Ad-hoc per-batch percentage[span_95](start_span)[span_95](end_span). | Standardized $R^2$, $\text{MAE}$, $\text{RMSE}$, and $100\% - \text{MAPE}$[span_96](start_span)[span_96](end_span)[span_97](start_span)[span_97](end_span). | | **Solver Correctness**[span_98](start_span)[span_98](end_span) | Asserted without external cross-check[span_99](start_span)[span_99](end_span). | Independently verified against numpy.linalg.solve across multiple test matrices to 6 decimal places[span_100](start_span)[span_100](end_span). | --- ## 📊 Empirical Results & Performance Benchmarks ### 1. In-Sample Fit vs. Cross-Validated Generalization Benchmarked using standard laboratory mix test observations ($N = 8$)[span_101](start_span)[span_101](end_span)[span_102](start_span)[span_102](end_span): | Performance Metric | In-Sample Training Fit[span_103](start_span)[span_103](end_span) | Leave-One-Out Cross-Validation (LOOCV)[span_104](start_span)[span_104](end_span) | | :--- | :--- | :--- | | **$R^2$ Score** | *$0.977$**[span_105](start_span)[span_105](end_span) | **$0.942$* (across 7 valid folds)[span_106](start_span)[span_106](end_span) | | *Mean Absolute Error (MAE)* | *$0.78\text{ MPa}$* | *$1.18\text{ MPa}$* | | *Root Mean Squared Error (RMSE)* | *$0.93\text{ MPa}$* | *$1.41\text{ MPa}$* | | *Average Accuracy ($100\% - \text{MAPE}$)* | *$97.63\%$* | *$96.34\%$* | | *Interpretation* | Optimistic upper-bound fit[span_107](start_span)[span_107](end_span). | Unbiased proxy for real-world field predictions[span_108](start_span)[span_108](end_span). | > Note on Numerical Conditioning: Removing one batch during LOOCV revealed that 1 fold hit an ill-conditioned system ($X^T X$ pivot dropped to $\approx 7 \times 10^{-5}$)[span_109](start_span)[span_109](end_span). The solver identified and skipped this unstable fold, highlighting the sample-size limitation[span_110](start_span)[span_110](end_span)[span_111](start_span)[span_111](end_span)[span_112](start_span)[span_112](end_span). ### 2. Learned Weights & Coefficient Significance $$\text{Strength} = -5.99 + 0.1176(\text{Cement}) - 19.8648(w/c) + 0.5463(\text{Age})$$[span_113](start_span)[span_113](end_span)[span_114](start_span)[span_114](end_span)[span_115](start_span)[span_115](end_span) | Coefficient | Parameter | Estimate | Std. Error | $t$-statistic | $p$-value | Significant ($p < 0.05$)? | | :---: | :--- | :---: | :---: | :---: | :---: | :---: | | *$\beta_0$**[span_116](start_span)[span_116](end_span) | Intercept[span_117](start_span)[span_117](end_span) | $-5.9894$[span_118](start_span)[span_118](end_span) | $115.59$[span_119](start_span)[span_119](end_span) | $-0.05$ | $0.961$[span_120](start_span)[span_120](end_span) | No[span_121](start_span)[span_121](end_span) | | **$\beta_1$**[span_122](start_span)[span_122](end_span) | Cement ($\text{kg/m}^3$)[span_123](start_span)[span_123](end_span)[span_124](start_span)[span_124](end_span) | $+0.1176$[span_125](start_span)[span_125](end_span) | $0.16$[span_126](start_span)[span_126](end_span) | $+0.75$ | $0.495$[span_127](start_span)[span_127](end_span) | No[span_128](start_span)[span_128](end_span) | | **$\beta_2$**[span_129](start_span)[span_129](end_span) | $w/c$ Ratio[span_130](start_span)[span_130](end_span)[span_131](start_span)[span_131](end_span) | $-19.8648$[span_132](start_span)[span_132](end_span) | $142.65$[span_133](start_span)[span_133](end_span) | $-0.14$ | $0.896$[span_134](start_span)[span_134](end_span) | No[span_135](start_span)[span_135](end_span) | | **$\beta_3$**[span_136](start_span)[span_136](end_span) | Curing Age (Days)[span_137](start_span)[span_137](end_span)[span_138](start_span)[span_138](end_span) | $+0.5463$[span_139](start_span)[span_139](end_span) | $0.075$[span_140](start_span)[span_140](end_span) | $+7.30$ | **$0.002$**[span_141](start_span)[span_141](end_span) | **Yes (Statistically Meaningful)**[span_142](start_span)[span_142](end_span) | * **Engineering Takeaway:* Curing age is statistically distinguishable from zero ($p = 0.002$)[span_143](start_span)[span_143](end_span). While cement content and water-cement ratio conform to Abrams' Law directionally, a larger batch sample size is required to narrow their confidence intervals[span_144](start_span)[span_144](end_span). --- ## 📂 Project Structure ```text ├── app.py # Streamlit web application with VIF, audit tables, and LOOCV UI[span_145](start_span)[span_145](end_span)[span_146](start_span)[span_146](end_span) ├── gauss_jordan.py # Custom solver with partial pivoting & scale-aware singularity checks[span_147](start_span)[span_147](end_span)[span_148](start_span)[span_148](end_span) ├── linear_regression.py # OLS Normal Equations engine, custom (XᵀX)⁻¹ inversion, and LOOCV[span_149](start_span)[span_149](end_span)[span_150](start_span)[span_150](end_span) ├── requirements.txt # Dependencies (streamlit, numpy, pandas, scipy) └── README.md # Project documentation and engineering defense report[span_151](start_span)[span_151](end_span) 
+# 🏗️ Concrete Compressive Strength Predictor & Linear Systems Solver
+### Supervised Machine Learning via Custom Gauss-Jordan Elimination with Scale-Aware Pivoting
+
+*Davao Oriental State University*  
+College of Engineering — Department of Civil Engineering[span_0](start_span)[span_0](end_span)  
+*Project Defense Documentation & Technical Implementation (September 2026)*[span_1](start_span)[span_1](end_span)
+
+[![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Python](https://img.shields.io/badge/Language-Python%203.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Academic%20Use-blue?style=for-the-badge)](#)
+
+---
+
+## 👥 Proponents & Contributors
+
+* **John Joshua D. Ilisan**[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span)
+* **Darius Lape**[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span)
+* **Briel Jan M. Lacia**[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)
+
+---
+
+## 📌 Executive Summary
+
+In civil engineering practice, evaluating the 28-day compressive strength of concrete conventionally requires casting standard cylinders and curing them in water tanks for nearly a month before conducting destructive testing on a Universal Testing Machine (UTM)[span_8](start_span)[span_8](end_span). 
+
+This project demonstrates how *Machine Learning* can estimate concrete compressive strength directly from batch proportions from first principles[span_9](start_span)[span_9](end_span). Rather than relying on commercial, closed-source "black box" libraries such as Scikit-Learn, all numerical and machine learning foundations are implemented from scratch[span_10](start_span)[span_10](end_span):
+1. **Custom Gauss-Jordan Elimination Solver (gauss_jordan.py):** Solves general $n \times n$ systems using partial pivoting, scale-aware relative tolerance singularity detection, and an auditable step-by-step transformation logging pipeline[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span).
+2. **Multiple Linear Regression Engine (linear_regression.py):** Solves Ordinary Least Squares (OLS) via the Normal Equations[span_13](start_span)[span_13](end_span)[span_14](start_span)[span_14](end_span). Features custom matrix inversion of $X^T X$ (solving unit column vectors $e_i$ via Gauss-Jordan), coefficient hypothesis testing ($t$-statistics and $p$-values), and Leave-One-Out Cross-Validation (LOOCV)[span_15](start_span)[span_15](end_span)[span_16](start_span)[span_16](end_span).
+3. **Interactive Streamlit Web Dashboard (app.py):** Includes a general matrix solver (Tab 1) and an applied civil engineering predictor (Tab 2) equipped with multicollinearity screening (VIF), interactive data editing, in-sample vs. held-out validation metrics, and mix design simulation sliders[span_17](start_span)[span_17](end_span)[span_18](start_span)[span_18](end_span).
+
+---
+
+## 📐 Mathematical Formulation
+
+### 1. The Concrete Compressive Strength Model
+Concrete compressive strength is modeled as a multi-variable linear function of three primary mix parameters[span_19](start_span)[span_19](end_span):
+
+$$\text{Strength} = \beta_0 + \beta_1(\text{Cement}) + \beta_2(w/c) + \beta_3(\text{Age})$$[span_20](start_span)[span_20](end_span)
+
+| Parameter | Type | Unit | Engineering Role & Behavior |
+| :--- | :--- | :--- | :--- |
+| *$\beta_0$* | Unknown | $\text{MPa}$ | *Baseline Intercept*: Mathematical datum of the regression hyperplane[span_21](start_span)[span_21](end_span). |
+| *$x_1$ / $\beta_1$* | Feature | $\text{kg/m}^3$ | *Cement Content*: Primary binder[span_22](start_span)[span_22](end_span)[span_23](start_span)[span_23](end_span). Positive effect ($\beta_1 > 0$) as binder paste densifies[span_24](start_span)[span_24](end_span)[span_25](start_span)[span_25](end_span). |
+| *$x_2$ / $\beta_2$* | Feature | Decimal | *Water-Cement Ratio ($w/c$)*: Governed by Abrams' Law[span_26](start_span)[span_26](end_span)[span_27](start_span)[span_27](end_span). Negative effect ($\beta_2 < 0$) due to capillary voids left by unreacted water[span_28](start_span)[span_28](end_span)[span_29](start_span)[span_29](end_span). |
+| *$x_3$ / $\beta_3$* | Feature | Days | *Curing Age*: Hydration progression over time[span_30](start_span)[span_30](end_span)[span_31](start_span)[span_31](end_span). Positive effect ($\beta_3 > 0$) as Calcium Silicate Hydrates (C-S-H) form[span_32](start_span)[span_32](end_span)[span_33](start_span)[span_33](end_span). |
+| *$y$* | Target | $\text{MPa}$ | *Compressive Strength*: Failure stress under UTM compression[span_34](start_span)[span_34](end_span). |
+
+---
+
+### 2. Ordinary Least Squares via the Normal Equations
+Because the number of cylinder test batches ($N$) exceeds the number of regression parameters ($k = 4$), the experimental system is rectangular and overdetermined ($X\beta \approx y$)[span_35](start_span)[span_35](end_span). 
+
+To minimize the sum of squared prediction errors $\sum (y - \hat{y})^2$, calculus yields the **Normal Equations**[span_36](start_span)[span_36](end_span):
+
+$$(X^T X)\beta = X^T y \quad \iff \quad A\beta = b$$[span_37](start_span)[span_37](end_span)[span_38](start_span)[span_38](end_span)
+
+* $X$ is the $(N \times 4)$ design matrix with a leading bias column of $1$s[span_39](start_span)[span_39](end_span)[span_40](start_span)[span_40](end_span).
+* $X^T X$ compresses the $N$ observations into a symmetric, square $(4 \times 4)$ coefficient matrix ($A$)[span_41](start_span)[span_41](end_span)[span_42](start_span)[span_42](end_span).
+* $X^T y$ compresses target values into a $(4 \times 1)$ column vector ($b$)[span_43](start_span)[span_43](end_span)[span_44](start_span)[span_44](end_span).
+* The unknown weight vector $\beta = [\beta_0, \beta_1, \beta_2, \beta_3]^T$ is solved directly by passing $[(X^T X) \mid (X^T y)]$ into our custom Gauss-Jordan solver[span_45](start_span)[span_45](end_span)[span_46](start_span)[span_46](end_span)[span_47](start_span)[span_47](end_span).
+
+---
+
+### 3. Scale-Aware Gauss-Jordan Elimination
+The custom solver in gauss_jordan.py applies *Partial Pivoting* to maintain numerical stability by swapping rows to position the maximum absolute pivot value on the diagonal before row normalization[span_48](start_span)[span_48](end_span)[span_49](start_span)[span_49](end_span).
+
+* *Scale-Aware Singularity Check:* Because civil engineering data combines variables of drastically different scales (cement content $\sim 300\text{ kg/m}^3$ vs. $w/c$ ratio $\sim 0.4$), fixed absolute tolerances fail[span_50](start_span)[span_50](end_span)[span_51](start_span)[span_51](end_span). The solver dynamically establishes a relative singularity threshold[span_52](start_span)[span_52](end_span)[span_53](start_span)[span_53](end_span):
+  $$\text{threshold} = \max(\text{tol} \times \max(\vert{}M\vert{}), 10^{-14}) \quad \text{where } \text{tol} = 10^{-10}$$[span_54](start_span)[span_54](end_span)
+  If a pivot falls below this relative threshold, the system is rejected as singular or ill-conditioned[span_55](start_span)[span_55](end_span)[span_56](start_span)[span_56](end_span).
+
+---
+
+### 4. Statistical Inference & Custom Matrix Inversion
+To evaluate whether regression coefficients are statistically meaningful or merely artifacts of small-sample noise, the standard errors of $\beta$ are computed[span_57](start_span)[span_57](end_span)[span_58](start_span)[span_58](end_span):
+
+$$\text{SE}(\beta) = \sqrt{\sigma^2 \cdot \text{diag}((X^T X)^{-1})}, \quad \text{where } \sigma^2 = \frac{\sum (y - \hat{y})^2}{N - p}$$[span_59](start_span)[span_59](end_span)
+
+* *No Library Inversion:* Rather than calling np.linalg.inv, the system computes $(X^T X)^{-1}$ using the custom Gauss-Jordan engine by solving $(X^T X)z_i = e_i$ for each standard unit basis vector $e_i$[span_60](start_span)[span_60](end_span)[span_61](start_span)[span_61](end_span).
+* *Hypothesis Testing:* Two-tailed $t$-statistics ($t = \beta / \text{SE}$) and $p$-values are evaluated across $N - p$ degrees of freedom[span_62](start_span)[span_62](end_span)[span_63](start_span)[span_63](end_span).
+
+---
+
+### 5. Multicollinearity & Honest Cross-Validation
+* *Variance Inflation Factor (VIF):* Computed prior to training to ensure that physical interdependencies between cement content and water ratio do not cause collinearity breakdown[span_64](start_span)[span_64](end_span)[span_65](start_span)[span_65](end_span). Each predictor is regressed against all other predictors using our custom regression class[span_66](start_span)[span_66](end_span).
+* *Leave-One-Out Cross-Validation (LOOCV):* With small batch samples, in-sample $R^2$ is optimistically biased[span_67](start_span)[span_67](end_span)[span_68](start_span)[span_68](end_span)[span_69](start_span)[span_69](end_span). The system iteratively withholds each observation, retrains the model on the remaining $N-1$ specimens, and predicts the held-out point[span_70](start_span)[span_70](end_span)[span_71](start_span)[span_71](end_span)[span_72](start_span)[span_72](end_span). Unstable or ill-conditioned folds are flagged and reported[span_73](start_span)[span_73](end_span)[span_74](start_span)[span_74](end_span)[span_75](start_span)[span_75](end_span).
+
+---
+
+## 🔬 Methodological Improvements
+
+| Engineering Aspect | Initial Implementation | Revised & Verified Implementation |
+| :--- | :--- | :--- |
+| **Singularity Threshold**[span_76](start_span)[span_76](end_span) | Fixed absolute tolerance ($10^{-12}$)[span_77](start_span)[span_77](end_span). | Scale-aware relative tolerance ($\text{tol} \times \max(\vert{}M\vert{})$) preventing false passes on ill-conditioned systems[span_78](start_span)[span_78](end_span)[span_79](start_span)[span_79](end_span). |
+| *Validation Rigor**[span_80](start_span)[span_80](end_span) | In-sample training fit labeled as "validation[span_81](start_span)"[span_81](end_span). | Added full **Leave-One-Out Cross-Validation (LOOCV)* as an independent accuracy check[span_82](start_span)[span_82](end_span)[span_83](start_span)[span_83](end_span)[span_84](start_span)[span_84](end_span). |
+| **Statistical Inference**[span_85](start_span)[span_85](end_span) | Point estimates reported without uncertainty bounds[span_86](start_span)[span_86](end_span). | Standard errors, $t$-statistics, degrees of freedom, and $p$-values derived via custom $(X^T X)^{-1}$[span_87](start_span)[span_87](end_span)[span_88](start_span)[span_88](end_span)[span_89](start_span)[span_89](end_span). |
+| **Multicollinearity Checks**[span_90](start_span)[span_90](end_span) | Not assessed[span_91](start_span)[span_91](end_span). | Automated Variance Inflation Factor (VIF) and pairwise correlation matrix computed pre-training[span_92](start_span)[span_92](end_span)[span_93](start_span)[span_93](end_span). |
+| **Accuracy Metric**[span_94](start_span)[span_94](end_span) | Ad-hoc per-batch percentage[span_95](start_span)[span_95](end_span). | Standardized $R^2$, $\text{MAE}$, $\text{RMSE}$, and $100\% - \text{MAPE}$[span_96](start_span)[span_96](end_span)[span_97](start_span)[span_97](end_span). |
+| **Solver Correctness**[span_98](start_span)[span_98](end_span) | Asserted without external cross-check[span_99](start_span)[span_99](end_span). | Independently verified against numpy.linalg.solve across multiple test matrices to 6 decimal places[span_100](start_span)[span_100](end_span). |
+
+---
+
+## 📊 Empirical Results & Performance Benchmarks
+
+### 1. In-Sample Fit vs. Cross-Validated Generalization
+Benchmarked using standard laboratory mix test observations ($N = 8$)[span_101](start_span)[span_101](end_span)[span_102](start_span)[span_102](end_span):
+
+| Performance Metric | In-Sample Training Fit[span_103](start_span)[span_103](end_span) | Leave-One-Out Cross-Validation (LOOCV)[span_104](start_span)[span_104](end_span) |
+| :--- | :--- | :--- |
+| *$R^2$ Score* | *$0.977$**[span_105](start_span)[span_105](end_span) | **$0.942$* (across 7 valid folds)[span_106](start_span)[span_106](end_span) |
+| *Mean Absolute Error (MAE)* | *$0.78\text{ MPa}$* | *$1.18\text{ MPa}$* |
+| *Root Mean Squared Error (RMSE)* | *$0.93\text{ MPa}$* | *$1.41\text{ MPa}$* |
+| *Average Accuracy ($100\% - \text{MAPE}$)* | *$97.63\%$* | *$96.34\%$* |
+| *Interpretation* | Optimistic upper-bound fit[span_107](start_span)[span_107](end_span). | Unbiased proxy for real-world field predictions[span_108](start_span)[span_108](end_span). |
+
+*Note on Numerical Conditioning:* Removing one batch during LOOCV revealed that 1 fold hit an ill-conditioned system ($X^T X$ pivot dropped to $\approx 7 \times 10^{-5}$)[span_109](start_span)[span_109](end_span). The solver identified and skipped this unstable fold, highlighting the sample-size limitation[span_110](start_span)[span_110](end_span)[span_111](start_span)[span_111](end_span)[span_112](start_span)[span_112](end_span).
+
+
+### 2. Learned Weights & Coefficient Significance
+
+$$\text{Strength} = -5.99 + 0.1176(\text{Cement}) - 19.8648(w/c) + 0.5463(\text{Age})$$[span_113](start_span)[span_113](end_span)[span_114](start_span)[span_114](end_span)[span_115](start_span)[span_115](end_span)
+
+| Coefficient | Parameter | Estimate | Std. Error | $t$-statistic | $p$-value | Significant ($p < 0.05$)? |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| **$\beta_0$**[span_116](start_span)[span_116](end_span) | Intercept[span_117](start_span)[span_117](end_span) | $-5.9894$[span_118](start_span)[span_118](end_span) | $115.59$[span_119](start_span)[span_119](end_span) | $-0.05$ | $0.961$[span_120](start_span)[span_120](end_span) | No[span_121](start_span)[span_121](end_span) |
+| **$\beta_1$**[span_122](start_span)[span_122](end_span) | Cement ($\text{kg/m}^3$)[span_123](start_span)[span_123](end_span)[span_124](start_span)[span_124](end_span) | $+0.1176$[span_125](start_span)[span_125](end_span) | $0.16$[span_126](start_span)[span_126](end_span) | $+0.75$ | $0.495$[span_127](start_span)[span_127](end_span) | No[span_128](start_span)[span_128](end_span) |
+| **$\beta_2$**[span_129](start_span)[span_129](end_span) | $w/c$ Ratio[span_130](start_span)[span_130](end_span)[span_131](start_span)[span_131](end_span) | $-19.8648$[span_132](start_span)[span_132](end_span) | $142.65$[span_133](start_span)[span_133](end_span) | $-0.14$ | $0.896$[span_134](start_span)[span_134](end_span) | No[span_135](start_span)[span_135](end_span) |
+| **$\beta_3$**[span_136](start_span)[span_136](end_span) | Curing Age (Days)[span_137](start_span)[span_137](end_span)[span_138](start_span)[span_138](end_span) | $+0.5463$[span_139](start_span)[span_139](end_span) | $0.075$[span_140](start_span)[span_140](end_span) | $+7.30$ | **$0.002$**[span_141](start_span)[span_141](end_span) | **Yes (Statistically Meaningful)**[span_142](start_span)[span_142](end_span) |
+
+* *Engineering Takeaway:* Curing age is statistically distinguishable from zero ($p = 0.002$)[span_143](start_span)[span_143](end_span). While cement content and water-cement ratio conform to Abrams' Law directionally, a larger batch sample size is required to narrow their confidence intervals[span_144](start_span)[span_144](end_span).
+
+---
+
+## 📂 Project Structure
+
+```text
+├── app.py                 # Streamlit web application with VIF, audit tables, and LOOCV UI[span_145](start_span)[span_145](end_span)[span_146](start_span)[span_146](end_span)
+├── gauss_jordan.py        # Custom solver with partial pivoting & scale-aware singularity checks[span_147](start_span)[span_147](end_span)[span_148](start_span)[span_148](end_span)
+├── linear_regression.py   # OLS Normal Equations engine, custom (XᵀX)⁻¹ inversion, and LOOCV[span_149](start_span)[span_149](end_span)[span_150](start_span)[span_150](end_span)
+├── requirements.txt       # Dependencies (streamlit, numpy, pandas, scipy)
+└── README.md              # Project documentation and engineering defense report[span_151](start_span)[span_151](end_span)
+
 
 🚀 Installation & Local Deployment
 
@@ -9,15 +148,19 @@ Ensure Python 3.9+ is installed on your machine.
 
 2. Clone the Repository
 
-git clone [https://github.com/your-username/concrete-ml-gauss-jordan.git](https://github.com/your-username/concrete-ml-gauss-jordan.git) cd concrete-ml-gauss-jordan 
+git clone [https://github.com/your-username/concrete-ml-gauss-jordan.git](https://github.com/your-username/concrete-ml-gauss-jordan.git)
+cd concrete-ml-gauss-jordan
+
 
 3. Install Dependencies
 
-pip install streamlit numpy pandas scipy 
+pip install streamlit numpy pandas scipy
+
 
 4. Run the Streamlit Application
 
-streamlit run app.py 
+streamlit run app.py
+
 
 The interface will automatically launch at http://localhost:8501. The app runs fully offline without requiring an active internet connection.
 
@@ -25,13 +168,17 @@ The interface will automatically launch at http://localhost:8501. The app runs f
 
 Tab 1: System of Linear Equations (Ax = b)
 
+
 Select matrix dimensions n \times n (from 2 \times 2 to 8 \times 😎.
 
 Edit coefficient values and constants vector b directly inside the interactive table.
 
 Click "Solve with Gauss-Jordan" to view solution variables with clean unicode subscripts (x_1, x_2, \dots) and inspect every row swap, normalization, and elimination step.
 
+
+
 Tab 2: Concrete Strength Predictor
+
 
 Multicollinearity Pre-Screening: Expand the pre-training panel to inspect Variance Inflation Factors (VIF) and correlation coefficients.
 
@@ -43,7 +190,10 @@ Examine Validation: Inspect in-sample metrics (R^2, MAE, RMSE) and compare them 
 
 Interactive Mix Simulator: Adjust the Cement, w/c ratio, and Curing Age sliders to predict compressive strength in real time.
 
+
+
 ⚠️ Engineering Limitations & Future Work
+
 
 Sample Size: With N = 8 batches for 4 unknowns, the degrees of freedom (N - p = 4) remain constrained. Expanding the dataset to N \ge 40 will narrow parameter standard errors.
 
