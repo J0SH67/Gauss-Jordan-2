@@ -1,4 +1,3 @@
-```markdown
 # 🏗️ Concrete Compressive Strength Predictor & Linear Systems Solver
 ### *Supervised Machine Learning via Custom Gauss-Jordan Elimination with Scale-Aware Pivoting*
 
